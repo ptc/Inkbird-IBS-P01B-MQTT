@@ -9,7 +9,6 @@ import logging
 from configparser import ConfigParser
 import os.path
 import argparse
-import daemon
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -20,7 +19,7 @@ logging.basicConfig(
 # Argparse
 
 project_name = 'Inkbird MQTT Sensor for Bluetooth pool sensor'
-project_url = 'https://example.com'
+project_url = 'https://github.com/ptc/Inkbird-IBS-P01B-MQTT'
 
 parser = argparse.ArgumentParser(description=project_name, epilog='For further details see: ' + project_url)
 parser.add_argument('--config_dir', help='set directory where config.ini is located', default=sys.path[0])
@@ -37,9 +36,6 @@ try:
 except IOError:
     logging.error('No configuration file "config.ini"')
     sys.exit(1)
-
-reporting_mode = config['General'].get('reporting_method', 'mqtt-json')
-used_adapter = config['General'].get('adapter', 'hci0')
 
 broker = config['MQTT'].get('hostname', 'localhost')
 port = config['MQTT'].get('port', '1883')
@@ -96,7 +92,6 @@ else:
     mqtt_client.loop_start()
     sleep(1.0) # some slack to establish the connection
 
-
 def float_value(nums):
     # check if temp is negative
     num = (nums[1]<<8)|nums[0]
@@ -116,7 +111,6 @@ def get_readings():
         logging.error("Error reading BTLE: {}".format(e))
         return False
 
-# with daemon.DaemonContext():
 while True:
     readings = get_readings()
     if not readings:
@@ -124,10 +118,15 @@ while True:
 
     logging.info("raw data: {}".format(readings))
 
-    # little endian, first two bytes are temp_c, second two bytes are humidity
+    # little endian, first two bytes are temp
     temperature_c = float_value(readings[0:2])
-    mqtt_client.publish('{}/celsius'.format(topic),temperature_c)
+    logging.debug("temperature: {}".format(temperature_c))
 
-    logging.info("temperature: {}".format(temperature_c))
+    result = mqtt_client.publish('{}/celsius'.format(topic),temperature_c)
+
+    if result[0] == 0:
+        logging.debug(f"sent {topic}, {temperature_c}")
+    else:
+        logging.info(f"failed to send {topic}")
 
     sleep(read_interval)
