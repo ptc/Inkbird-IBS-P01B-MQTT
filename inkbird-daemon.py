@@ -135,9 +135,9 @@ while True:
     result = mqtt_client.publish('{}/celsius'.format(topic),temperature_c)
 
     if result[0] == 0:
-        logging.debug(f"mqtt: sent {topic}, {temperature_c}")
+        logging.debug("mqtt: sent {}, {}".format(topic,temperature_c))
     else:
-        logging.info(f"mqtt: failed to send {topic}")
+        logging.info("mqtt: failed to send {}".format(topic))
 
     if run_as_daemon:
         logging.debug('Going to sleep for {} seconds ...'.format(read_interval))
