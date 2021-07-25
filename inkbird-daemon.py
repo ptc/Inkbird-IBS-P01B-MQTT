@@ -23,7 +23,7 @@ project_url = 'https://github.com/ptc/Inkbird-IBS-P01B-MQTT'
 
 parser = argparse.ArgumentParser(description=project_name, epilog='For further details see: ' + project_url)
 parser.add_argument('--config_dir', help='set directory where config.ini is located', default=sys.path[0])
-parser.add_argument('--nodaemon', help='one time execution, no daemon mode', default=False)
+parser.add_argument('--nodaemon', help='For one time execution (no daemon mode) set to True', default=False)
 parse_args = parser.parse_args()
 
 # Load configuration file
