@@ -112,7 +112,7 @@ def c_to_f(temperature_c):
 
 def read_current_value():
     try:
-        dev = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC, iface=bt_interface)
+        dev = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC)
         # First two bytes on characteristic at 0x0024 contain current 
         # temperature in Celsius as little endian value
         readings = dev.readCharacteristic(0x0024)
