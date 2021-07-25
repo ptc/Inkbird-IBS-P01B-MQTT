@@ -46,6 +46,7 @@ The easiest way to use the device within Home Assistant is to define a MQTT sens
   unit_of_measurement: '°C'
 ```
 
-Inspired by:
+## Credit
+Script inspired by:
 - https://github.com/ThomDietrich/miflora-mqtt-daemon/
 - https://github.com/viyh/inkbird
