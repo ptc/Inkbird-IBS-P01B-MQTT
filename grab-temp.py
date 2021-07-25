@@ -15,7 +15,6 @@ logging.basicConfig(
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
         
-
 # Argparse
 
 project_name = 'Inkbird MQTT Sensor for Bluetooth pool sensor'
@@ -37,10 +36,7 @@ except IOError:
     logging.error('No configuration file "config.ini"')
     sys.exit(1)
 
-broker = config['MQTT'].get('hostname', 'localhost')
-port = config['MQTT'].get('port', '1883')
 topic = config['MQTT'].get('topic', "/test/sensor/pool") 
-
 mac = config['Sensors'].get('PoolSensor', 'PoolSensor')
 read_interval = int(config['General'].get('read_interval', 3600))
 
