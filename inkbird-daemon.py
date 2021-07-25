@@ -23,7 +23,7 @@ project_url = 'https://github.com/ptc/Inkbird-IBS-P01B-MQTT'
 
 parser = argparse.ArgumentParser(description=project_name, epilog='For further details see: ' + project_url)
 parser.add_argument('--config_dir', help='set directory where config.ini is located', default=sys.path[0])
-parser.add_argument('--nodaemon', help='one time execution, no daemon mode', default=True)
+parser.add_argument('--nodaemon', help='one time execution, no daemon mode', default=False)
 parse_args = parser.parse_args()
 
 # Load configuration file
@@ -41,13 +41,13 @@ except IOError:
 
 topic = config['MQTT'].get('topic', "/test/sensor/pool") 
 mac = config['Sensors'].get('PoolSensor', 'PoolSensor')
-read_interval = int(config['General'].get('read_interval', 3600))
+read_interval = int(config['Daemon'].get('read_interval', 3600))
 run_as_daemon = config['Daemon'].get('enabled', True)
 
 if nodaemon_arg:
     run_as_daemon = False
+    logging.info("non daemon mode")
 
-bt_interface = config['General'].get('adapter', "hci0")
 
 # Eclipse Paho callbacks - http://www.eclipse.org/paho/clients/python/docs/#callbacks
 def on_connect(client, userdata, flags, rc):
