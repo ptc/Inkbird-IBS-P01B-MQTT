@@ -1,6 +1,6 @@
 [General]
 
-# The bluetooth adapter that should be used to connect to Mi Flora devices (Default: hci0)
+# The bluetooth adapter that should be used to connect to Inkbird device (Default: hci0)
 adapter = hci0
 
 [Daemon]
@@ -8,8 +8,7 @@ adapter = hci0
 # Enable or Disable an endless execution loop (Default: true)
 enabled = true
 
-# The period between two measurements in seconds (Default: 300)
-period = 600
+# The period between two measurements in seconds (Default: 1800)
 read_interval = 1800
 
 [MQTT]

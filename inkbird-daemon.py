@@ -9,10 +9,11 @@ import logging
 from configparser import ConfigParser
 import os.path
 import argparse
+import sdnotify
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
+        level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S')
         
 # Argparse
@@ -22,10 +23,12 @@ project_url = 'https://github.com/ptc/Inkbird-IBS-P01B-MQTT'
 
 parser = argparse.ArgumentParser(description=project_name, epilog='For further details see: ' + project_url)
 parser.add_argument('--config_dir', help='set directory where config.ini is located', default=sys.path[0])
+parser.add_argument('--nodaemon', help='one time execution, no daemon mode', default=True)
 parse_args = parser.parse_args()
 
 # Load configuration file
 config_dir = parse_args.config_dir
+nodaemon_arg = parse_args.nodaemon
 
 config = ConfigParser(delimiters=('=', ), inline_comment_prefixes=('#'))
 config.optionxform = str
@@ -39,6 +42,12 @@ except IOError:
 topic = config['MQTT'].get('topic', "/test/sensor/pool") 
 mac = config['Sensors'].get('PoolSensor', 'PoolSensor')
 read_interval = int(config['General'].get('read_interval', 3600))
+run_as_daemon = config['Daemon'].get('enabled', True)
+
+if nodaemon_arg:
+    run_as_daemon = False
+
+bt_interface = config['General'].get('adapter', "hci0")
 
 # Eclipse Paho callbacks - http://www.eclipse.org/paho/clients/python/docs/#callbacks
 def on_connect(client, userdata, flags, rc):
@@ -88,6 +97,9 @@ else:
     mqtt_client.loop_start()
     sleep(1.0) # some slack to establish the connection
 
+n = sdnotify.SystemdNotifier()
+n.notify("READY=1")
+
 def float_value(nums):
     # check if temp is negative
     num = (nums[1]<<8)|nums[0]
@@ -98,9 +110,11 @@ def float_value(nums):
 def c_to_f(temperature_c):
     return 9.0/5.0 * temperature_c + 32
 
-def get_readings():
+def read_current_value():
     try:
-        dev = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC)
+        dev = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC, iface=bt_interface)
+        # First two bytes on characteristic at 0x0024 contain current 
+        # temperature in Celsius as little endian value
         readings = dev.readCharacteristic(0x0024)
         return readings
     except Exception as e:
@@ -108,21 +122,28 @@ def get_readings():
         return False
 
 while True:
-    readings = get_readings()
-    if not readings:
+    current_value = read_current_value()
+    if not current_value:
         continue
 
-    logging.info("raw data: {}".format(readings))
+    logging.info("raw data: {}".format(current_value))
 
     # little endian, first two bytes are temp
-    temperature_c = float_value(readings[0:2])
+    temperature_c = float_value(current_value[0:2])
     logging.debug("temperature: {}".format(temperature_c))
 
     result = mqtt_client.publish('{}/celsius'.format(topic),temperature_c)
 
     if result[0] == 0:
-        logging.debug(f"sent {topic}, {temperature_c}")
+        logging.debug(f"mqtt: sent {topic}, {temperature_c}")
     else:
-        logging.info(f"failed to send {topic}")
+        logging.info(f"mqtt: failed to send {topic}")
 
-    sleep(read_interval)
+    if run_as_daemon:
+        logging.debug('Going to sleep for {} seconds ...'.format(read_interval))
+        sleep(read_interval)
+    else:
+        logging.info('One time execution done, exiting')
+        mqtt_client.disconnect()
+        break
+    

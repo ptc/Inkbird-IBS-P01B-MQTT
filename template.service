@@ -1,0 +1,20 @@
+[Unit]
+Description=Inkbird IBS-P01B Bluetooth MQTT daemin
+Documentation=https://github.com/ptc/Inkbird-IBS-P01B-MQTT
+After=network.target bluetooth.service mosquitto.service
+
+[Service]
+Type=notify
+User=daemon
+Group=daemon
+WorkingDirectory=/opt/Inkbird-IBS-P01B-MQTT/
+ExecStart=/usr/bin/python3 /opt/Inkbird-IBS-P01B-MQTT/inkbird-daemon.py
+StandardOutput=null
+#StandardOutput=syslog
+#SyslogIdentifier=inkbird
+StandardError=journal
+Environment=PYTHONUNBUFFERED=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
